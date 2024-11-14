@@ -44,7 +44,7 @@
   "peerDependencies": {
     "@angular/common": "^18.1.0",
     "@angular/core": "^18.1.0",
-    "monaco-editor": "^0.50.0"
+    "monaco-editor": "^0.52.0"
   },
   "dependencies": {
     "tslib": "^2.1.0"
