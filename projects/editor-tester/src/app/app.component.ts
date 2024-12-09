@@ -7,10 +7,9 @@ import { JsonPipe } from '@angular/common';
 declare var monaco: any;
 
 @Component({
-  standalone: true,
-  selector: 'app-root',
-  imports: [FormsModule, JsonPipe, EditorComponent, DiffEditorComponent],
-  template: `
+    selector: 'app-root',
+    imports: [FormsModule, JsonPipe, EditorComponent, DiffEditorComponent],
+    template: `
     <h1>Editor</h1>
     <button (click)="updateOptions()">Change Language</button>
     <button (click)="code = ''; codeInput=''">Set Value To Empty String</button>
@@ -35,7 +34,7 @@ declare var monaco: any;
 
     <ngx-monaco-editor [options]="options" [model]="model"></ngx-monaco-editor>
   `,
-  styles: []
+    styles: []
 })
 export class AppComponent implements OnInit {
   codeInput = 'Sample Code';
