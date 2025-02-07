@@ -1,16 +1,20 @@
 import {
-  AfterViewInit,
-  Component,
-  ElementRef,
-  EventEmitter,
-  Input,
-  OnDestroy,
-  Output,
-  ViewChild,
-  inject
+    AfterViewInit,
+    Component,
+    ElementRef,
+    EventEmitter,
+    Input,
+    OnDestroy,
+    Output,
+    ViewChild,
+    inject
 } from '@angular/core';
+import type MonacoNamespace from 'monaco-editor';
 import { Subscription } from 'rxjs';
 import { NGX_MONACO_EDITOR_CONFIG, NgxMonacoEditorConfig } from './config';
+
+type IEditor = MonacoNamespace.editor.IEditor;
+type MonacoOpts = MonacoNamespace.editor.IDiffEditorOptions;
 
 let loadedMonaco = false;
 let loadPromise: Promise<void>;
@@ -36,9 +40,9 @@ export abstract class BaseEditor implements AfterViewInit, OnDestroy {
   }
 
   @ViewChild('editorContainer', { static: true }) _editorContainer: ElementRef;
-  @Output() onInit = new EventEmitter<any>();
-  protected _editor: any;
-  protected _options: any;
+  @Output() onInit = new EventEmitter<IEditor>();
+  protected _editor: IEditor;
+  protected _options: MonacoOpts;
   protected _windowResizeSubscription: Subscription;
   private _insideNg: boolean = false;
 

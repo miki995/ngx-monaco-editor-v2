@@ -1,10 +1,16 @@
 import { ChangeDetectionStrategy, Component, Input, NgZone, inject } from '@angular/core';
 import { fromEvent } from 'rxjs';
 
+import type MonacoNamespace from 'monaco-editor';
 import { BaseEditor } from './base-editor';
 import { DiffEditorModel } from './types';
 
-declare var monaco: any;
+type IDiffEditor = MonacoNamespace.editor.IDiffEditor;
+type MonacoOpts = MonacoNamespace.editor.IDiffEditorConstructionOptions;
+
+
+type Monaco = typeof MonacoNamespace;
+declare var monaco: Monaco;
 
 @Component({
   standalone: true,
@@ -26,11 +32,13 @@ declare var monaco: any;
 export class DiffEditorComponent extends BaseEditor {
   private zone = inject(NgZone);
 
+  _editor: IDiffEditor;
+
   _originalModel: DiffEditorModel;
   _modifiedModel: DiffEditorModel;
 
   @Input('options')
-  set options(options: any) {
+  set options(options: MonacoOpts) {
     this._options = Object.assign({}, this.config.defaultOptions, options);
     if (this._editor) {
       this._editor.dispose();

@@ -2,10 +2,16 @@ import { ChangeDetectionStrategy, Component, forwardRef, inject, Input, NgZone }
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { fromEvent } from 'rxjs';
 
+import type MonacoNamespace from 'monaco-editor';
 import { BaseEditor } from './base-editor';
 import { NgxEditorModel } from './types';
 
-declare var monaco: any;
+type MonacoOpts = MonacoNamespace.editor.IStandaloneEditorConstructionOptions;
+
+type Monaco = typeof MonacoNamespace;
+declare var monaco: Monaco;
+
+type ICodeEditor = MonacoNamespace.editor.ICodeEditor;
 
 @Component({
   standalone: true,
@@ -33,11 +39,13 @@ export class EditorComponent extends BaseEditor implements ControlValueAccessor 
   private zone = inject(NgZone);
   private _value: string = '';
 
+  _editor: ICodeEditor;
+
   propagateChange = (_: any) => {};
   onTouched = () => {};
 
   @Input('options')
-  set options(options: any) {
+  set options(options: MonacoOpts) {
     this._options = Object.assign({}, this.config.defaultOptions, options);
     if (this._editor) {
       this._editor.dispose();
