@@ -77,7 +77,7 @@ export class EditorComponent extends BaseEditor implements ControlValueAccessor 
   }
 
   setDisabledState(disabled: boolean): void {
-    this.options.readOnly = disabled;
+    this.options.readOnly = disabled || this._options.readOnly;
   }
 
   protected initMonaco(options: any, insideNg: boolean): void {
