@@ -4,7 +4,12 @@ import { DiffEditorComponent, EditorComponent } from 'projects/editor/src/public
 import { FormsModule } from '@angular/forms';
 import { JsonPipe } from '@angular/common';
 
-declare var monaco: any;
+import * as monaco from 'monaco-editor';
+import { languages } from 'monaco-editor';
+import CompletionItemKind = languages.CompletionItemKind;
+interface MonarchLanguageConfiguration extends monaco.languages.IMonarchLanguage {
+  keywords: string[];
+}
 
 @Component({
   selector: 'app-root',
@@ -17,11 +22,11 @@ declare var monaco: any;
     <button (click)="code = undefined; codeInput=undefined">Set Value To undefined</button>
     <button (click)="showMultiple = !showMultiple">{{showMultiple ? 'Hide' : 'Show'}} Multiple Editor</button>
     <select [(ngModel)]="options.theme" (ngModelChange)="onThemeChange($event)" name="theme">
-      <option value="" selected disabled>Theme</option>  
+      <option value="" selected disabled>Theme</option>
       @for(theme of availableThemes; track $index){
         <option [value]="theme">{{theme}}</option>
       }
-      
+
     </select>
 
     <div style="height: 100px">
@@ -128,6 +133,36 @@ export class AppComponent implements OnInit {
     // let text = 'FOO';
     // let op = { identifier: id, range: range, text: text, forceMoveMarkers: true };
     // editor.executeEdits("my-source", [op]);
+
+
+    if ((window as any).monaco) {
+
+      (window as any).monaco.languages.registerCompletionItemProvider('typescript', {
+        provideCompletionItems: () => {
+          var suggestions = [
+            {
+              label: 'simpleText',
+              kind: monaco.languages.CompletionItemKind.Text,
+              insertText: 'simpleText',
+            },
+            {
+              label: 'testing',
+              kind: monaco.languages.CompletionItemKind.Keyword,
+              insertText: 'testing(${1:condition})',
+              insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+            },
+            {
+              label: 'ifelse',
+              kind: monaco.languages.CompletionItemKind.Snippet,
+              insertText: ['if (${1:condition}) {', '\t$0', '} else {', '\t', '}'].join('\n'),
+              insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+              documentation: 'If-Else Statement',
+            },
+          ];
+          return { suggestions: suggestions };
+        },
+      });
+    }
   }
 
   onInitDiffEditor(editor) {
