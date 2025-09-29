@@ -17,6 +17,9 @@
         "build": {
           "builder": "@angular-devkit/build-angular:application",
           "options": {
+            "loader": {
+              ".ttf": "binary"
+            },
             "outputPath": "dist/editor-tester",
             "index": "projects/editor-tester/src/index.html",
             "browser": "projects/editor-tester/src/main.ts",
@@ -47,7 +50,7 @@
                 {
                   "type": "initial",
                   "maximumWarning": "500kb",
-                  "maximumError": "1mb"
+                  "maximumError": "5mb"
                 },
                 {
                   "type": "anyComponentStyle",
