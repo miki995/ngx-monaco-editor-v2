@@ -42,9 +42,9 @@
     "Thomas-Louis Simard <thomas.louis.simard@gmail.com>"
   ],
   "peerDependencies": {
-    "@angular/common": "^21.0.0",
-    "@angular/core": "^21.0.0",
-    "monaco-editor": "^0.55.1"
+    "@angular/common": ">=20",
+    "@angular/core": ">=20",
+    "monaco-editor": ">=0.51"
   },
   "dependencies": {
     "tslib": "^2.8.1"
