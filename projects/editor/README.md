@@ -16,6 +16,7 @@
 - Angular 18: 18.x.x
 - Angular 19: 19.x.x
 - Angular 20: 20.x.x
+- Angular 21: 21.x.x
 
 Using this Module you can utilize the Monaco Editor as an Angular Component. Feel free to contribute, raise feature requests and make it better.
 
@@ -33,7 +34,7 @@ https://ngx-monaco-editor-v2.surge.sh/
 
 Install from npm repository:
 ```
-npm install monaco-editor ngx-monaco-editor-v2 --save
+npm install monaco-editor ngx-monaco-editor-v2
  ```
 
 Breaking change from v10, is to use monaco-editor next to ngx-monaco-editor-v2 in your package.json file.
