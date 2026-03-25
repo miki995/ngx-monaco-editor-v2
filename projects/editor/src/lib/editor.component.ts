@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, forwardRef, inject, Input, NgZone } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { fromEvent } from 'rxjs';
 
@@ -30,7 +31,9 @@ declare var monaco: any;
   }]
 })
 export class EditorComponent extends BaseEditor implements ControlValueAccessor {
-  private zone = inject(NgZone);
+  private readonly zone = inject(NgZone);
+  private readonly destroyRef = inject(DestroyRef);
+  
   private _value: string = '';
 
   propagateChange = (_: any) => {};
@@ -81,7 +84,6 @@ export class EditorComponent extends BaseEditor implements ControlValueAccessor 
   }
 
   protected initMonaco(options: any, insideNg: boolean): void {
-
     const hasModel = !!options.model;
 
     if (hasModel) {
@@ -129,7 +131,7 @@ export class EditorComponent extends BaseEditor implements ControlValueAccessor 
     if (this._windowResizeSubscription) {
       this._windowResizeSubscription.unsubscribe();
     }
-    this._windowResizeSubscription = fromEvent(window, 'resize').subscribe(() => this._editor.layout());
+    this._windowResizeSubscription = fromEvent(window, 'resize').pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this._editor.layout());
     this.onInit.emit(this._editor);
   }
 
