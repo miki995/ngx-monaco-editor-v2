@@ -1,6 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { DiffEditorModel, NgxEditorModel } from '../../../editor/src/lib/types';
-import { DiffEditorComponent, EditorComponent } from 'projects/editor/src/public-api';
+import { DiffEditorComponent, EditorComponent } from '../../../editor/src/public-api';
 import { FormsModule } from '@angular/forms';
 import { JsonPipe } from '@angular/common';
 
@@ -46,6 +46,7 @@ interface MonarchLanguageConfiguration extends monaco.languages.IMonarchLanguage
 
     <ngx-monaco-editor [options]="options" [model]="model"></ngx-monaco-editor>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: []
 })
 export class AppComponent implements OnInit {

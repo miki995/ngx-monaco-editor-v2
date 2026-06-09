@@ -7,7 +7,8 @@ import {
   OnDestroy,
   Output,
   ViewChild,
-  inject
+  inject,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { NGX_MONACO_EDITOR_CONFIG, NgxMonacoEditorConfig } from './config';
@@ -17,6 +18,7 @@ let loadPromise: Promise<void>;
 
 @Component({
     template: '',
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export abstract class BaseEditor implements AfterViewInit, OnDestroy {
