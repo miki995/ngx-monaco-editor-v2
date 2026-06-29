@@ -26,6 +26,8 @@
     "build-and-deploy-demo:win": "run-s build:prod copy:200 deploy:demo",
     "build-editor": "npm run copy:readme && ng build editor",
     "npm-publish": "npm run build-editor && npm publish ./dist/editor --access public",
+    "publish:editor": "npm publish ./dist/editor --access public",
+    "npm-publish:win": "run-s build-editor publish:editor",
     "copy:readme": "shx cp -f README.md projects/editor/"
   },
   "private": false,
