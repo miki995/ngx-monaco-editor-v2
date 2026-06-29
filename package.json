@@ -1,6 +1,6 @@
 {
   "name": "ngx-monaco-editor-v2",
-  "version": "21.1.4",
+  "version": "22.0.4",
   "description": "Monaco Code Editor For Angular",
   "keywords": [
     "angular",
@@ -18,11 +18,12 @@
     "build": "ng build --project=editor-tester --base-href=editor-tester --configuration=development",
     "build:prod": "ng build --project=editor-tester --base-href=editor-tester",
     "lint": "ng lint",
+    "test": "ng test editor-tester --no-watch",
     "e2e": "ng e2e",
-    "build-and-deploy-demo": "npm run build:prod && cp dist/editor-tester/browser/index.html dist/editor-tester/browser/200.html && cd dist/editor-tester/browser && surge --domain ngx-monaco-editor-v2.surge.sh",
+    "build-and-deploy-demo": "npm run build:prod && shx cp dist/editor-tester/browser/index.html dist/editor-tester/browser/200.html && cd dist/editor-tester/browser && surge --domain ngx-monaco-editor-v2.surge.sh",
     "build-editor": "npm run copy:readme && ng build editor",
-    "npm-publish": "npm run build-editor && bash npm-publish",
-    "copy:readme": "cp -rf README.md projects/editor/"
+    "npm-publish": "npm run build-editor && npm publish ./dist/editor --access public",
+    "copy:readme": "shx cp -f README.md projects/editor/"
   },
   "private": false,
   "repository": {
@@ -39,34 +40,32 @@
     "Thomas-Louis Simard <thomas.louis.simard@gmail.com>"
   ],
   "dependencies": {
-    "@angular/animations": "^21.1.4",
-    "@angular/common": "^21.1.4",
-    "@angular/compiler": "^21.1.4",
-    "@angular/core": "^21.1.4",
-    "@angular/forms": "^21.1.4",
-    "@angular/platform-browser": "^21.1.4",
-    "@angular/platform-browser-dynamic": "^21.1.4",
-    "@angular/router": "^21.1.4",
+    "@angular/common": "^22.0.4",
+    "@angular/compiler": "^22.0.4",
+    "@angular/core": "^22.0.4",
+    "@angular/forms": "^22.0.4",
+    "@angular/platform-browser": "^22.0.4",
+    "@angular/router": "^22.0.4",
     "monaco-editor": "^0.55.1",
     "rxjs": "^7.8.2",
     "tslib": "^2.8.1",
-    "zone.js": "^0.15.1"
+    "zone.js": "^0.16.2"
   },
   "devDependencies": {
-    "@angular/build": "^21.1.4",
-    "@angular/cli": "21.1.4",
-    "@angular/compiler-cli": "21.1.4",
-    "@angular/language-service": "21.1.4",
-    "@types/jasmine": "^5.1.8",
+    "@angular/build": "^22.0.4",
+    "@angular/cli": "22.0.4",
+    "@angular/compiler-cli": "22.0.4",
+    "@angular/language-service": "22.0.4",
     "@types/node": "^24.0.3",
-    "jasmine-core": "^5.8.0",
-    "karma": "^6.4.4",
-    "karma-chrome-launcher": "^3.2.0",
-    "karma-coverage": "^2.2.1",
-    "karma-jasmine": "^5.1.0",
-    "karma-jasmine-html-reporter": "^2.1.0",
-    "ng-packagr": "^21.1.0",
+    "happy-dom": "^20.10.6",
+    "istanbul-lib-instrument": "^6.0.3",
+    "ng-packagr": "^22.0.0",
     "npm-run-all": "^4.1.5",
-    "typescript": "5.9.3"
+    "shx": "^0.4.0",
+    "typescript": "6.0.3",
+    "vitest": "^4.0.8"
+  },
+  "engines": {
+    "node": "^22.22.3 || ^24.15.0 || >=26.0.0"
   }
 }

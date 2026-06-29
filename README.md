@@ -17,10 +17,25 @@
 - Angular 19: 19.x.x
 - Angular 20: 20.x.x
 - Angular 21: 21.x.x
+- Angular 22: 22.x.x
 
 Using this Module you can utilize the Monaco Editor as an Angular Component. Feel free to contribute, raise feature requests and make it better.
 
 Supports all the options available in monaco-editor [Monaco Editor Options](https://microsoft.github.io/monaco-editor/docs.html)
+
+## What's new in v22
+
+- **Angular 22 support** (TypeScript 6, `zone.js` 0.16). Requires Node `^22.22.3 || ^24.15.0 || >=26`.
+- **Fully typed public API** — `(onInit)` now emits a typed monaco editor instead of `any`.
+- **Memory-leak fix** — monaco models created by the editor/diff-editor are disposed on
+  re-init and on destroy.
+- **`setDisabledState`** now applies to a live editor immediately (e.g. reactive forms).
+- Components migrated to Angular signal inputs/outputs internally — the template API is unchanged.
+- **Breaking:** the `setTheme()` method is no longer monkey-patched onto the editor emitted by
+  `(onInit)`. Use the new `EditorComponent.setTheme(theme)` method, or call
+  `monaco.editor.setTheme(theme)` directly.
+
+See the [CHANGELOG](https://github.com/miki995/ngx-monaco-editor-v2/blob/master/CHANGELOG.md) for the full list.
 
 ## Demo
 
@@ -77,7 +92,39 @@ For Angular 6 and below, add the glob to assets in `.angular-cli.json` schema - 
 }
  ```
 
-### Sample
+### Sample (standalone — recommended)
+The editor components are standalone. Register the config once with `provideMonacoEditor` and
+import the component where you use it.
+```typescript
+// main.ts
+import { bootstrapApplication } from '@angular/platform-browser';
+import { provideMonacoEditor } from 'ngx-monaco-editor-v2';
+import { AppComponent } from './app/app.component';
+
+bootstrapApplication(AppComponent, {
+  providers: [
+    provideMonacoEditor() // optionally pass a NgxMonacoEditorConfig
+  ]
+});
+```
+```typescript
+// app.component.ts
+import { Component } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { EditorComponent } from 'ngx-monaco-editor-v2';
+
+@Component({
+  selector: 'app-root',
+  imports: [FormsModule, EditorComponent],
+  template: `<ngx-monaco-editor [options]="editorOptions" [(ngModel)]="code"></ngx-monaco-editor>`
+})
+export class AppComponent {
+  editorOptions = { theme: 'vs-dark', language: 'javascript' };
+  code = 'function x() {\n  console.log("Hello world!");\n}';
+}
+```
+
+### Sample (NgModule)
 Include MonacoEditorModule in Main Module and Feature Modules where you want to use the editor component.(eg: app.module.ts): 
 ```typescript
 import { BrowserModule } from '@angular/platform-browser';
