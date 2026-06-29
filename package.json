@@ -21,6 +21,7 @@
     "test": "ng test editor-tester --no-watch",
     "e2e": "ng e2e",
     "build-and-deploy-demo": "npm run build:prod && shx cp dist/editor-tester/browser/index.html dist/editor-tester/browser/200.html && cd dist/editor-tester/browser && surge --domain ngx-monaco-editor-v2.surge.sh",
+    "build-and-deploy-demo:win": "npm run build:prod && shx cp dist/editor-tester/browser/index.html dist/editor-tester/browser/200.html && surge dist/editor-tester/browser --domain ngx-monaco-editor-v2.surge.sh",
     "build-editor": "npm run copy:readme && ng build editor",
     "npm-publish": "npm run build-editor && npm publish ./dist/editor --access public",
     "copy:readme": "shx cp -f README.md projects/editor/"
