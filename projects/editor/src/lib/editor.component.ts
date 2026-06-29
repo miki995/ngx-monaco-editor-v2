@@ -1,11 +1,12 @@
-import { ChangeDetectionStrategy, Component, forwardRef, inject, Input, NgZone } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, forwardRef, inject, input, NgZone } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { fromEvent } from 'rxjs';
+import type * as Monaco from 'monaco-editor';
 
 import { BaseEditor } from './base-editor';
 import { NgxEditorModel } from './types';
 
-declare var monaco: any;
+declare const monaco: typeof Monaco;
 
 @Component({
   standalone: true,
@@ -29,40 +30,34 @@ declare var monaco: any;
     multi: true
   }]
 })
-export class EditorComponent extends BaseEditor implements ControlValueAccessor {
-  private zone = inject(NgZone);
-  private _value: string = '';
+export class EditorComponent extends BaseEditor<Monaco.editor.IStandaloneCodeEditor> implements ControlValueAccessor {
+  private readonly zone = inject(NgZone);
+  private _value = '';
+  private _disabled = false;
+
+  readonly options = input<Monaco.editor.IStandaloneEditorConstructionOptions>({});
+  readonly model = input<NgxEditorModel>();
 
   propagateChange = (_: any) => {};
   onTouched = () => {};
 
-  @Input('options')
-  set options(options: any) {
-    this._options = Object.assign({}, this.config.defaultOptions, options);
-    if (this._editor) {
-      this._editor.dispose();
-      this.initMonaco(this._options, this.insideNg);
-    }
-  }
-
-  get options(): any {
-    return this._options;
-  }
-
-  @Input('model')
-  set model(model: NgxEditorModel) {
-    this.options.model = model;
-    if (this._editor) {
-      this._editor.dispose();
-      this.initMonaco(this.options, this.insideNg);
-    }
+  constructor() {
+    super();
+    // Re-create the editor whenever the options or model inputs change.
+    effect(() => {
+      this.options();
+      this.model();
+      if (this._editor) {
+        this.reinit();
+      }
+    });
   }
 
   writeValue(value: any): void {
     this._value = value || '';
     // Fix for value change while dispose in process.
     setTimeout(() => {
-      if (this._editor && !this.options.model) {
+      if (this._editor && !this.model()) {
         this._editor.setValue(this._value);
       }
     });
@@ -76,61 +71,75 @@ export class EditorComponent extends BaseEditor implements ControlValueAccessor 
     this.onTouched = fn;
   }
 
-  setDisabledState(disabled: boolean): void {
-    this.options.readOnly = disabled || this._options.readOnly;
+  setDisabledState(isDisabled: boolean): void {
+    this._disabled = isDisabled;
+    // Apply immediately to a live editor instead of waiting for a re-init.
+    this._editor?.updateOptions({ readOnly: isDisabled || !!this.options().readOnly });
   }
 
-  protected initMonaco(options: any, insideNg: boolean): void {
+  /** Change the global monaco theme (e.g. `'vs-dark'`). */
+  setTheme(themeName: string): void {
+    monaco.editor.setTheme(themeName);
+  }
 
-    const hasModel = !!options.model;
+  protected initMonaco(): void {
+    const options: Monaco.editor.IStandaloneEditorConstructionOptions = {
+      ...this.config.defaultOptions,
+      ...this.options()
+    };
+    if (this._disabled) {
+      options.readOnly = true;
+    }
 
-    if (hasModel) {
-      const model = monaco.editor.getModel(options.model.uri || '');
-      if (model) {
-        options.model = model;
-        options.model.setValue(this._value);
+    const modelInput = this.model();
+    if (modelInput) {
+      const existing = modelInput.uri ? monaco.editor.getModel(modelInput.uri as Monaco.Uri) : null;
+      if (existing) {
+        existing.setValue(this._value);
+        options.model = existing;
       } else {
-        options.model = monaco.editor.createModel(options.model.value, options.model.language, options.model.uri);
+        const created = monaco.editor.createModel(
+          modelInput.value,
+          modelInput.language,
+          modelInput.uri as Monaco.Uri | undefined
+        );
+        this._models.push(created);
+        options.model = created;
       }
     }
 
-    if (insideNg) {
-      this._editor = monaco.editor.create(this._editorContainer.nativeElement, options);
+    const container = this.editorContainer().nativeElement;
+    if (this.insideNg()) {
+      this._editor = monaco.editor.create(container, options);
     } else {
       this.zone.runOutsideAngular(() => {
-        this._editor = monaco.editor.create(this._editorContainer.nativeElement, options);
-      })
-    }
-
-    if (!hasModel) {
-      this._editor.setValue(this._value);
-    }
-
-    this._editor.onDidChangeModelContent((e: any) => {
-      const value = this._editor.getValue();
-
-      // value is not propagated to parent when executing outside zone.
-      this.zone.run(() => {
-        this.propagateChange(value);
-        this._value = value;
+        this._editor = monaco.editor.create(container, options);
       });
-    });
+    }
 
-    this._editor.onDidBlurEditorWidget(() => {
-      this.onTouched();
-    });
+    if (!options.model) {
+      this._editor!.setValue(this._value);
+    }
 
-    this._editor.setTheme = (themeName: string): void => {
-      this.options.theme = themeName;
-      monaco.editor.setTheme(themeName);
-    };
+    this._listeners.push(
+      this._editor!.onDidChangeModelContent(() => {
+        const value = this._editor!.getValue();
+        // value is not propagated to parent when executing outside zone.
+        this.zone.run(() => {
+          this.propagateChange(value);
+          this._value = value;
+        });
+      })
+    );
+
+    this._listeners.push(
+      this._editor!.onDidBlurEditorWidget(() => {
+        this.onTouched();
+      })
+    );
 
     // refresh layout on resize event.
-    if (this._windowResizeSubscription) {
-      this._windowResizeSubscription.unsubscribe();
-    }
-    this._windowResizeSubscription = fromEvent(window, 'resize').subscribe(() => this._editor.layout());
-    this.onInit.emit(this._editor);
+    this._windowResizeSubscription = fromEvent(window, 'resize').subscribe(() => this._editor!.layout());
+    this.onInit.emit(this._editor!);
   }
-
 }

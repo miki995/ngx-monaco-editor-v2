@@ -1,52 +1,64 @@
 import {
   AfterViewInit,
+  ChangeDetectionStrategy,
   Component,
   ElementRef,
-  EventEmitter,
-  Input,
   OnDestroy,
-  Output,
-  ViewChild,
-  inject
+  effect,
+  inject,
+  input,
+  output,
+  viewChild
 } from '@angular/core';
 import { Subscription } from 'rxjs';
+import type * as Monaco from 'monaco-editor';
+
 import { NGX_MONACO_EDITOR_CONFIG, NgxMonacoEditorConfig } from './config';
+
+// `monaco` is exposed as a global by the AMD loader (see `ngAfterViewInit`).
+declare const monaco: typeof Monaco;
 
 let loadedMonaco = false;
 let loadPromise: Promise<void>;
 
 @Component({
-    template: '',
-    standalone: false
+  template: '',
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false
 })
-export abstract class BaseEditor implements AfterViewInit, OnDestroy {
-  config = inject<NgxMonacoEditorConfig>(NGX_MONACO_EDITOR_CONFIG);
+export abstract class BaseEditor<TEditor extends Monaco.editor.IEditor = Monaco.editor.IEditor>
+  implements AfterViewInit, OnDestroy {
+  protected readonly config = inject<NgxMonacoEditorConfig>(NGX_MONACO_EDITOR_CONFIG);
 
-  @Input('insideNg')
-  set insideNg(insideNg: boolean) {
-    this._insideNg = insideNg;
-    if (this._editor) {
-      this._editor.dispose();
-      this.initMonaco(this._options, this.insideNg);
-    }
+  /** Run monaco creation inside Angular's zone (defaults to outside for performance). */
+  readonly insideNg = input(false);
+  /** Emits the underlying monaco editor instance once it has been created. */
+  readonly onInit = output<TEditor>();
+
+  protected readonly editorContainer = viewChild.required<ElementRef<HTMLElement>>('editorContainer');
+
+  protected _editor?: TEditor;
+  /** Models created by this component, tracked so they can be disposed (monaco keeps them globally otherwise). */
+  protected _models: Monaco.editor.ITextModel[] = [];
+  /** Editor event listeners, disposed alongside the editor. */
+  protected _listeners: Monaco.IDisposable[] = [];
+  protected _windowResizeSubscription?: Subscription;
+
+  protected constructor() {
+    // Re-create the editor when `insideNg` changes after it already exists.
+    effect(() => {
+      this.insideNg();
+      if (this._editor) {
+        this.reinit();
+      }
+    });
   }
-
-  get insideNg(): boolean {
-    return this._insideNg;
-  }
-
-  @ViewChild('editorContainer', { static: true }) _editorContainer: ElementRef;
-  @Output() onInit = new EventEmitter<any>();
-  protected _editor: any;
-  protected _options: any;
-  protected _windowResizeSubscription: Subscription;
-  private _insideNg: boolean = false;
 
   ngAfterViewInit(): void {
     if (loadedMonaco) {
       // Wait until monaco editor is available
       loadPromise.then(() => {
-        this.initMonaco(this._options, this.insideNg);
+        this.initMonaco();
       });
     } else {
       loadedMonaco = true;
@@ -57,7 +69,7 @@ export abstract class BaseEditor implements AfterViewInit, OnDestroy {
           baseUrl = "./assets/monaco/min/vs";
         }
         if (typeof ((<any>window).monaco) === 'object') {
-          this.initMonaco(this._options, this.insideNg);
+          this.initMonaco();
           resolve();
           return;
         }
@@ -72,7 +84,7 @@ export abstract class BaseEditor implements AfterViewInit, OnDestroy {
             if (typeof this.config.onMonacoLoad === 'function') {
               this.config.onMonacoLoad();
             }
-            this.initMonaco(this._options, this.insideNg);
+            this.initMonaco();
             resolve();
           });
         };
@@ -116,15 +128,27 @@ export abstract class BaseEditor implements AfterViewInit, OnDestroy {
     }
   }
 
-  protected abstract initMonaco(options: any, insideNg: boolean): void;
+  protected abstract initMonaco(): void;
 
-  ngOnDestroy() {
-    if (this._windowResizeSubscription) {
-      this._windowResizeSubscription.unsubscribe();
-    }
-    if (this._editor) {
-      this._editor.dispose();
-      this._editor = undefined;
-    }
+  /** Tear down the current editor and create a fresh one. */
+  protected reinit(): void {
+    this.disposeEditor();
+    this.initMonaco();
+  }
+
+  /** Dispose the editor and every resource it owns (listeners, models, subscriptions). */
+  protected disposeEditor(): void {
+    this._windowResizeSubscription?.unsubscribe();
+    this._windowResizeSubscription = undefined;
+    this._listeners.forEach(listener => listener.dispose());
+    this._listeners = [];
+    this._editor?.dispose();
+    this._editor = undefined;
+    this._models.forEach(model => model.dispose());
+    this._models = [];
+  }
+
+  ngOnDestroy(): void {
+    this.disposeEditor();
   }
 }

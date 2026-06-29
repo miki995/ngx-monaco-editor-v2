@@ -1,10 +1,11 @@
-import { ChangeDetectionStrategy, Component, Input, NgZone, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, input, NgZone } from '@angular/core';
 import { fromEvent } from 'rxjs';
+import type * as Monaco from 'monaco-editor';
 
 import { BaseEditor } from './base-editor';
 import { DiffEditorModel } from './types';
 
-declare var monaco: any;
+declare const monaco: typeof Monaco;
 
 @Component({
   standalone: true,
@@ -23,78 +24,61 @@ declare var monaco: any;
   `],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class DiffEditorComponent extends BaseEditor {
-  private zone = inject(NgZone);
+export class DiffEditorComponent extends BaseEditor<Monaco.editor.IStandaloneDiffEditor> {
+  private readonly zone = inject(NgZone);
 
-  _originalModel: DiffEditorModel;
-  _modifiedModel: DiffEditorModel;
+  readonly options = input<Monaco.editor.IStandaloneDiffEditorConstructionOptions>({});
+  readonly originalModel = input<DiffEditorModel>();
+  readonly modifiedModel = input<DiffEditorModel>();
 
-  @Input('options')
-  set options(options: any) {
-    this._options = Object.assign({}, this.config.defaultOptions, options);
-    if (this._editor) {
-      this._editor.dispose();
-      this.initMonaco(this._options, this.insideNg);
-    }
+  constructor() {
+    super();
+    // Re-create the editor whenever options or either model change.
+    effect(() => {
+      this.options();
+      this.originalModel();
+      this.modifiedModel();
+      if (this._editor) {
+        this.reinit();
+      }
+    });
   }
 
-  get options(): any {
-    return this._options;
-  }
+  protected initMonaco(): void {
+    const original = this.originalModel();
+    const modified = this.modifiedModel();
 
-  @Input('originalModel')
-  set originalModel(model: DiffEditorModel) {
-    this._originalModel = model;
-    if (this._editor) {
-      this._editor.dispose();
-      this.initMonaco(this.options, this.insideNg);
-    }
-  }
-
-  @Input('modifiedModel')
-  set modifiedModel(model: DiffEditorModel) {
-    this._modifiedModel = model;
-    if (this._editor) {
-      this._editor.dispose();
-      this.initMonaco(this.options, this.insideNg);
-    }
-  }
-
-  protected initMonaco(options: any, insideNg: boolean): void {
-
-    if (!this._originalModel || !this._modifiedModel) {
+    if (!original || !modified) {
       throw new Error('originalModel or modifiedModel not found for ngx-monaco-diff-editor');
     }
 
-    this._originalModel.language = this._originalModel.language || options.language;
-    this._modifiedModel.language = this._modifiedModel.language || options.language;
+    const options: Monaco.editor.IStandaloneDiffEditorConstructionOptions = {
+      ...this.config.defaultOptions,
+      ...this.options()
+    };
 
-    let originalModel = monaco.editor.createModel(this._originalModel.code, this._originalModel.language);
-    let modifiedModel = monaco.editor.createModel(this._modifiedModel.code, this._modifiedModel.language);
+    const originalModel = monaco.editor.createModel(original.code, original.language || (options as any).language);
+    const modifiedModel = monaco.editor.createModel(modified.code, modified.language || (options as any).language);
+    this._models.push(originalModel, modifiedModel);
 
-    this._editorContainer.nativeElement.innerHTML = '';
-    const theme = options.theme;
+    const container = this.editorContainer().nativeElement;
+    container.innerHTML = '';
 
-    if (insideNg) {
-      this._editor = monaco.editor.createDiffEditor(this._editorContainer.nativeElement, options);
+    if (this.insideNg()) {
+      this._editor = monaco.editor.createDiffEditor(container, options);
     } else {
       this.zone.runOutsideAngular(() => {
-        this._editor = monaco.editor.createDiffEditor(this._editorContainer.nativeElement, options);
-      })
+        this._editor = monaco.editor.createDiffEditor(container, options);
+      });
     }
 
-    options.theme = theme;
-    this._editor.setModel({
+    this._editor!.setModel({
       original: originalModel,
       modified: modifiedModel
     });
 
     // refresh layout on resize event.
-    if (this._windowResizeSubscription) {
-      this._windowResizeSubscription.unsubscribe();
-    }
-    this._windowResizeSubscription = fromEvent(window, 'resize').subscribe(() => this._editor.layout());
-    this.onInit.emit(this._editor);
+    this._windowResizeSubscription = fromEvent(window, 'resize').subscribe(() => this._editor!.layout());
+    this.onInit.emit(this._editor!);
   }
-
 }

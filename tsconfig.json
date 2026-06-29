@@ -2,7 +2,6 @@
 {
   "compileOnSave": false,
   "compilerOptions": {
-    "baseUrl": "./",
     "outDir": "./dist/out-tsc",
     "forceConsistentCasingInFileNames": true,
     "esModuleInterop": true,
@@ -13,8 +12,8 @@
     "declaration": false,
     "paths": {
       "editor": [
-        "dist/editor/editor",
-        "dist/editor"
+        "./dist/editor/editor",
+        "./dist/editor"
       ]
     },
     "experimentalDecorators": true,
