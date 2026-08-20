@@ -2,6 +2,12 @@
 
 All notable changes to `ngx-monaco-editor-v2` are documented here.
 
+## 22.0.5 (2026-08-20)
+
+### Changed
+- **`monaco-editor` peer dependency bumped to `^0.56.0`.** No API changes affect this
+  library; build and test suite pass unchanged against the new version.
+
 ## 22.0.4 (2026-06-29)
 
 Support for **Angular 22**, plus a round of correctness, type-safety and tooling improvements.
