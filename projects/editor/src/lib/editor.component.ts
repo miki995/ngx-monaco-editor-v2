@@ -83,6 +83,9 @@ export class EditorComponent extends BaseEditor<Monaco.editor.IStandaloneCodeEdi
   }
 
   protected initMonaco(): void {
+    // Component was destroyed while monaco was still loading.
+    if (this.destroyRef.destroyed) return;
+
     const options: Monaco.editor.IStandaloneEditorConstructionOptions = {
       ...this.config.defaultOptions,
       ...this.options()

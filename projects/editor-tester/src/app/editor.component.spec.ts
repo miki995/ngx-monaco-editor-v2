@@ -1,12 +1,15 @@
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
+import { DiffEditorComponent } from '../../../editor/src/lib/diff-editor.component';
 import { EditorComponent } from '../../../editor/src/lib/editor.component';
 import { NGX_MONACO_EDITOR_CONFIG } from '../../../editor/src/lib/config';
 
 /** Counters and spies for the faked monaco global. */
 let disposed: { editor: number; models: number; listeners: number };
 let updateOptions: ReturnType<typeof vi.fn>;
+let create: ReturnType<typeof vi.fn>;
+let createDiffEditor: ReturnType<typeof vi.fn>;
 
 function installMonacoMock() {
   disposed = { editor: 0, models: 0, listeners: 0 };
@@ -24,9 +27,13 @@ function installMonacoMock() {
   };
   const fakeModel = { setValue: () => {}, dispose: () => { disposed.models++; } };
 
+  create = vi.fn(() => fakeEditor);
+  createDiffEditor = vi.fn(() => ({ ...fakeEditor, setModel: () => {} }));
+
   (window as any).monaco = {
     editor: {
-      create: () => fakeEditor,
+      create,
+      createDiffEditor,
       createModel: () => fakeModel,
       getModel: () => null,
       setTheme: vi.fn()
@@ -43,6 +50,15 @@ function installMonacoMock() {
 class HostComponent {
   options: any = {};
   model: any = undefined;
+}
+
+@Component({
+  standalone: true,
+  imports: [DiffEditorComponent],
+  template: `<ngx-monaco-diff-editor [originalModel]="model" [modifiedModel]="model"></ngx-monaco-diff-editor>`
+})
+class DiffHostComponent {
+  model = { code: 'x', language: 'json' };
 }
 
 describe('EditorComponent lifecycle', () => {
@@ -84,6 +100,26 @@ describe('EditorComponent lifecycle', () => {
 
     withModel.destroy();
     expect(disposed.models).toBeGreaterThanOrEqual(1);
+  });
+
+  it('does not create an editor when destroyed before monaco has loaded', async () => {
+    create.mockClear();
+    const shortLived = TestBed.createComponent(HostComponent);
+    shortLived.detectChanges();
+    // Destroyed while still waiting on the shared monaco load promise.
+    shortLived.destroy();
+    await new Promise(resolve => setTimeout(resolve));
+
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  it('does not create a diff editor when destroyed before monaco has loaded', async () => {
+    const shortLived = TestBed.createComponent(DiffHostComponent);
+    shortLived.detectChanges();
+    shortLived.destroy();
+    await new Promise(resolve => setTimeout(resolve));
+
+    expect(createDiffEditor).not.toHaveBeenCalled();
   });
 
   it('setDisabledState updates a live editor immediately', () => {

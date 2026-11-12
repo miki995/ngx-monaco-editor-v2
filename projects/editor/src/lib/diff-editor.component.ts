@@ -45,6 +45,9 @@ export class DiffEditorComponent extends BaseEditor<Monaco.editor.IStandaloneDif
   }
 
   protected initMonaco(): void {
+    // Component was destroyed while monaco was still loading.
+    if (this.destroyRef.destroyed) return;
+
     const original = this.originalModel();
     const modified = this.modifiedModel();
 
