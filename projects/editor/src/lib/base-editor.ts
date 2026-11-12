@@ -2,6 +2,7 @@ import {
   AfterViewInit,
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   ElementRef,
   OnDestroy,
   effect,
@@ -29,6 +30,7 @@ let loadPromise: Promise<void>;
 export abstract class BaseEditor<TEditor extends Monaco.editor.IEditor = Monaco.editor.IEditor>
   implements AfterViewInit, OnDestroy {
   protected readonly config = inject<NgxMonacoEditorConfig>(NGX_MONACO_EDITOR_CONFIG);
+  protected readonly destroyRef = inject(DestroyRef);
 
   /** Run monaco creation inside Angular's zone (defaults to outside for performance). */
   readonly insideNg = input(false);

@@ -2,6 +2,14 @@
 
 All notable changes to `ngx-monaco-editor-v2` are documented here.
 
+## 22.0.6 (2026-11-12)
+
+### Fixed
+- **Editor created after destroy:** a component destroyed while monaco was still loading
+  was initialised anyway once loading finished, leaving an editor and a window `resize`
+  subscription that were never disposed. Initialisation is now skipped for destroyed
+  components.
+
 ## 22.0.5 (2026-08-20)
 
 ### Changed
